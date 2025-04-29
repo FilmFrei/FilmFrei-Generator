@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Film Generator - Filmfrei Style</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: #121212; color: #F5F5F5; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    header { position: sticky; top: 0; padding: 20px 40px; background: rgba(18,18,18,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; }
+    .logo { width: 40px; height: 40px; background: #0A84FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+    .brand-name { font-size: 24px; font-weight: 600; margin-left: 10px; }
+    main { padding: 40px 20px; flex: 1; }
+    .generator-form, .result-container { background: #1A1A1A; border-radius: 12px; padding: 30px; margin: 20px auto; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
+    .form-input, .form-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #F5F5F5; font-size: 16px; }
+    .form-textarea { min-height: 100px; resize: vertical; }
+    .button-group { display: flex; gap: 10px; margin-top: 20px; }
+    button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+    .add-btn { background: #28a745; color: white; }
+    .generate-btn { background: #0A84FF; color: white; }
+    button:hover { opacity: 0.9; }
+    .result-code { background: #222; padding: 20px; border-radius: 10px; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 20px; color: #0A84FF; }
+    .success-message { margin-top: 15px; color: #28a745; font-weight: bold; display: none; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">F</div>
+  <div class="brand-name">Film Generator</div>
+</header>
+<main>
+  <section class="generator-form">
+    <h2>Film erstellen</h2>
+    <div class="form-group">
+      <label class="form-label">Filmtitel</label>
+      <input type="text" id="filmTitel" class="form-input" placeholder="z.B. Matrix">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Erscheinungsjahr</label>
+      <input type="number" id="filmJahr" class="form-input" placeholder="1999">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hochgeladen am</label>
+      <input type="date" id="filmDatum" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung</label>
+      <textarea id="filmBeschreibung" class="form-textarea" placeholder="Filmbeschreibung..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cover URL</label>
+      <input type="text" id="filmCover" class="form-input" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">iFrame oder Stream-Link</label>
+      <textarea id="filmIframe" class="form-textarea" placeholder="iframe oder Direktlink"></textarea>
+    </div>
+    <div class="button-group">
+      <button id="addFilmBtn" class="add-btn">+ Film hinzufügen</button>
+      <button id="generateBtn" class="generate-btn">Code generieren</button>
+    </div>
+    <div id="successMessage" class="success-message">Film erfolgreich gespeichert!</div>
+  </section>
+  <section id="resultSection" class="result-container" style="display:none;">
+    <h2>Generierter Code</h2>
+    <pre id="resultCode" class="result-code"></pre>
+  </section>
+</main>
+<script>
+const filmTitelInput = document.getElementById('filmTitel');
+const filmJahrInput = document.getElementById('filmJahr');
+const filmDatumInput = document.getElementById('filmDatum');
+const filmBeschreibungInput = document.getElementById('filmBeschreibung');
+const filmCoverInput = document.getElementById('filmCover');
+const filmIframeInput = document.getElementById('filmIframe');
+const addFilmBtn = document.getElementById('addFilmBtn');
+const generateBtn = document.getElementById('generateBtn');
+const resultCode = document.getElementById('resultCode');
+const resultSection = document.getElementById('resultSection');
+const successMessage = document.getElementById('successMessage');
+
+let filme = [];
+
+const heute = new Date();
+filmDatumInput.value = heute.toISOString().split('T')[0];
+
+addFilmBtn.addEventListener('click', () => {
+  let iframeInput = filmIframeInput.value.trim();
+  let iframeSrc = '';
+
+  const match = iframeInput.match(/src="([^"]+)"/);
+  if (match) { iframeSrc = match[1]; } else { iframeSrc = iframeInput; }
+
+  const neuerFilm = {
+    titel: filmTitelInput.value.trim(),
+    jahr: parseInt(filmJahrInput.value),
+    hochgeladenAm: filmDatumInput.value,
+    beschreibung: filmBeschreibungInput.value.trim(),
+    cover: filmCoverInput.value.trim() || "/api/placeholder/400/600",
+    iframe: iframeSrc
+  };
+
+  filme.push(neuerFilm);
+
+  successMessage.style.display = 'block';
+  setTimeout(() => {
+    successMessage.style.display = 'none';
+  }, 2000);
+
+  filmTitelInput.value = '';
+  filmJahrInput.value = '';
+  filmDatumInput.value = heute.toISOString().split('T')[0];
+  filmBeschreibungInput.value = '';
+  filmCoverInput.value = '';
+  filmIframeInput.value = '';
+});
+
+generateBtn.addEventListener('click', () => {
+  if (filme.length === 0) {
+    alert('Noch keine Filme hinzugefügt!');
+    return;
+  }
+
+  let output = "[\n";
+  filme.forEach(film => {
+    output += `  {\n`;
+    output += `    titel: "${escapeString(film.titel)}",\n`;
+    output += `    jahr: ${film.jahr},\n`;
+    output += `    hochgeladenAm: "${film.hochgeladenAm}",\n`;
+    output += `    beschreibung: "${escapeString(film.beschreibung)}",\n`;
+    output += `    cover: "${escapeString(film.cover)}",\n`;
+    output += `    iframe: "${escapeString(film.iframe)}"\n`;
+    output += `  },\n`;
+  });
+  output += "]";
+
+  resultCode.textContent = output;
+  resultSection.style.display = 'block';
+  resultSection.scrollIntoView({behavior: 'smooth'});
+});
+
+function escapeString(str) {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+}
+</script>
+</body>
+</html>
